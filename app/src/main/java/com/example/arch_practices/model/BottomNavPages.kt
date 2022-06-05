@@ -1,5 +1,6 @@
 package com.example.arch_practices.model
 
+import android.util.Log
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.ExperimentalAnimationApi
@@ -9,6 +10,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -31,11 +33,9 @@ sealed class BottomNavPage(val titleId: Int, val iconId: Int, val screenRoute: S
     object Feed: BottomNavPage(R.string.feed_page_title,  R.drawable.ic_baseline_dns_24, "feed")
     object Portfolio: BottomNavPage(R.string.portfolio_page_title, R.drawable.ic_baseline_work_24, "user_portfolio")
 }
-var onClick: ((Int) -> Unit)? = null
 
-@Preview
 @Composable
-fun FeedScreen(){
+fun FeedScreen(callBottomSheet: (Coin) -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -43,7 +43,18 @@ fun FeedScreen(){
     ) {
         LazyColumn(){
             items(32){
-                CryptoCard(it, onClick)
+                CryptoCard(Coin(
+                    name = "Name coin",
+                    priceUsd = 0.3333,
+                    changePercent24Hr = it - 10.0,
+                    symbol = "COIN"
+                ),
+                    onCardClick =  { coin ->
+
+                    },
+                    onMenuClick = { coin ->
+                        callBottomSheet(coin)
+                })
             }
         }
     }
@@ -71,7 +82,9 @@ fun PortfolioScreen(){
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
-fun BottomNavigationGraph(navController: NavHostController, innerPadding: PaddingValues) {
+fun BottomNavigationGraph(navController: NavHostController,
+                          innerPadding: PaddingValues,
+                          callBottomSheet: (Coin) -> Unit) {
     AnimatedNavHost(
         navController,
         modifier = Modifier.padding(innerPadding),
@@ -83,7 +96,7 @@ fun BottomNavigationGraph(navController: NavHostController, innerPadding: Paddin
             exitTransition = { ExitTransition.None },
             popExitTransition = { ExitTransition.None }
         ) {
-            FeedScreen()
+            FeedScreen(callBottomSheet)
         }
         composable(
             BottomNavPage.Portfolio.screenRoute,
@@ -99,8 +112,7 @@ fun BottomNavigationGraph(navController: NavHostController, innerPadding: Paddin
 
 
 @Composable
-fun BottomNavigation(navController: NavController, onClickListener: (Int) -> Unit){
-    onClick = onClickListener
+fun BottomNavigation(navController: NavController){
     val pages = listOf(
         BottomNavPage.Feed,
         BottomNavPage.Portfolio
