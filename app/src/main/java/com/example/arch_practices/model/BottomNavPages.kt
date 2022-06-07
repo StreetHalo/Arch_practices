@@ -1,6 +1,5 @@
 package com.example.arch_practices.model
 
-import android.util.Log
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.ExperimentalAnimationApi
@@ -10,7 +9,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -24,6 +22,10 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.paging.LoadState
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.items
 import com.example.arch_practices.CryptoCard
 import com.example.arch_practices.R
 import com.google.accompanist.navigation.animation.AnimatedNavHost
@@ -35,29 +37,52 @@ sealed class BottomNavPage(val titleId: Int, val iconId: Int, val screenRoute: S
 }
 
 @Composable
-fun FeedScreen(callBottomSheet: (Coin) -> Unit) {
+fun FeedScreen(callBottomSheet: (Coin) -> Unit, viewModel: CoinsViewModel) {
+    val coins: LazyPagingItems<Coin> = viewModel.getCoins().collectAsLazyPagingItems()
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .wrapContentSize(Alignment.Center)
     ) {
-        LazyColumn(){
-            items(32){
+        LazyColumn {
+            items(items = coins){ coin: Coin? ->
                 CryptoCard(Coin(
-                    name = "Name coin",
-                    priceUsd = 0.3333,
-                    changePercent24Hr = it - 10.0,
-                    symbol = "COIN"
+                    name = coin?.name ?: "",
+                    priceUsd = coin?.priceUsd ?: 0.0,
+                    changePercent24Hr = coin?.changePercent24Hr ?: 0.0,
+                    symbol = coin?.symbol ?: ""
                 ),
                     onCardClick =  { coin ->
 
                     },
                     onMenuClick = { coin ->
                         callBottomSheet(coin)
-                })
+                    })
             }
+
+            coins.apply {
+                when {
+                    loadState.refresh is LoadState.Loading -> {
+                        //You can add modifier to manage load state when first time response page is loading
+                    }
+                    loadState.append is LoadState.Loading -> {
+                        item {
+                            Column(modifier = Modifier
+                                .fillMaxWidth()
+                                .wrapContentSize(Alignment.Center)
+                            ) {
+                                CircularProgressIndicator()
+                            }
+                        }
+
+                    }
+                    loadState.append is LoadState.Error -> {
+                        //You can use modifier to show error message
+                    }
+                }
         }
     }
+}
 }
 
 @Preview
@@ -84,6 +109,7 @@ fun PortfolioScreen(){
 @Composable
 fun BottomNavigationGraph(navController: NavHostController,
                           innerPadding: PaddingValues,
+                          coinsViewModel: CoinsViewModel,
                           callBottomSheet: (Coin) -> Unit) {
     AnimatedNavHost(
         navController,
@@ -96,7 +122,7 @@ fun BottomNavigationGraph(navController: NavHostController,
             exitTransition = { ExitTransition.None },
             popExitTransition = { ExitTransition.None }
         ) {
-            FeedScreen(callBottomSheet)
+            FeedScreen(callBottomSheet, coinsViewModel)
         }
         composable(
             BottomNavPage.Portfolio.screenRoute,

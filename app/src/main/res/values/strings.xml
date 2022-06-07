@@ -2,4 +2,6 @@
     <string name="app_name">Arch_practices</string>
     <string name="feed_page_title">Feed</string>
     <string name="portfolio_page_title">Portfolio</string>
+    <string name="bottom_sheet_analytic">Аналитика</string>
+    <string name="bottom_sheet_add_coin">Добавить %s в избранное</string>
 </resources>

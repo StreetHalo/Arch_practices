@@ -28,7 +28,7 @@ sealed class Pages(val screenRoute: String){
 }
 
 @Composable
-fun MainScreen(mainNav: NavController){
+fun MainScreen(mainNav: NavController, coinsViewModel: CoinsViewModel){
     val bottomNavController = rememberAnimatedNavController()
 
     val coroutineScope = rememberCoroutineScope()
@@ -46,14 +46,14 @@ fun MainScreen(mainNav: NavController){
                     ) {
                         TextButton(
                             onClick = {
-                                mainNav.navigate(Pages.Analytic.screenRoute)
+
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(48.dp)
                         ) {
                             Text(
-                                text = "Добавить ${currentCoin?.name} в избранное",
+                                text = stringResource(id = R.string.bottom_sheet_add_coin, currentCoin?.name ?: ""),
                                 style = TextStyle.Default,
                                 color = Color.Black
                             )
@@ -67,14 +67,18 @@ fun MainScreen(mainNav: NavController){
                         )
                         TextButton(
                             onClick = {
-
+                                coroutineScope.launch {
+                                    bottomSheetState.hide()
+                                    mainNav.currentBackStackEntry?.savedStateHandle?.set("coin", currentCoin)
+                                    mainNav.navigate(Pages.Analytic.screenRoute)
+                                }
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(48.dp)
                         ) {
                             Text(
-                                text = "Аналитика",
+                                text = stringResource(R.string.bottom_sheet_analytic),
                                 style = TextStyle.Default,
                                 color = Color.Black
                             )
@@ -129,7 +133,7 @@ fun MainScreen(mainNav: NavController){
                 BottomNavigation(navController = bottomNavController)
             }
         ) { innerPadding ->
-            BottomNavigationGraph(bottomNavController, innerPadding, callBottomSheet = { coin ->
+            BottomNavigationGraph(bottomNavController, innerPadding, coinsViewModel, callBottomSheet = { coin ->
                 currentCoin = coin
                 coroutineScope.launch {
                     bottomSheetState.show()

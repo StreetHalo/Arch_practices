@@ -10,12 +10,13 @@ import androidx.compose.ui.Modifier
 
 
 @Composable
-fun CryptoScreen(){
+fun AnalyticScreen(coin: Coin) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .wrapContentSize(Alignment.Center)
     ) {
-        Text(text = "BLA_BLA!")
+        Text(text = "Hi there! \n I'am ${coin.name}")
+        Text(text = "${coin.changePercent24Hr}")
     }
 }

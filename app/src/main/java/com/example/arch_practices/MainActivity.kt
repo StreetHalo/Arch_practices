@@ -5,6 +5,7 @@ package com.example.arch_practices
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.ExperimentalAnimationApi
@@ -14,7 +15,9 @@ import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
-import com.example.arch_practices.model.CryptoScreen
+import com.example.arch_practices.model.AnalyticScreen
+import com.example.arch_practices.model.Coin
+import com.example.arch_practices.model.CoinsViewModel
 import com.example.arch_practices.model.pages.MainScreen
 import com.example.arch_practices.model.pages.Pages
 import com.google.accompanist.navigation.animation.AnimatedNavHost
@@ -25,24 +28,24 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val model: CoinsViewModel by viewModels()
         setContent {
-            App()
+            App(model)
         }
     }
 }
 
 @Composable
-fun App() {
+fun App(coinsViewModel: CoinsViewModel) {
     val navController = rememberAnimatedNavController()
     Scaffold(
-
     ) { innerPadding ->
-        NavigationGraph(navController, innerPadding)
+        NavigationGraph(navController, innerPadding, coinsViewModel)
     }
 }
 
 @Composable
-fun NavigationGraph(navController: NavHostController, innerPadding: PaddingValues){
+fun NavigationGraph(navController: NavHostController, innerPadding: PaddingValues, coinsViewModel: CoinsViewModel){
     AnimatedNavHost(
         navController = navController,
         startDestination = Pages.Main.screenRoute,
@@ -55,8 +58,9 @@ fun NavigationGraph(navController: NavHostController, innerPadding: PaddingValue
             exitTransition = { ExitTransition.None },
             popExitTransition = { ExitTransition.None }
         ){
-            MainScreen(navController)
+            MainScreen(navController, coinsViewModel = coinsViewModel)
         }
+        //            arguments = listOf(navArgument("coin") { type = NavType.StringType },
         composable(
             Pages.Analytic.screenRoute,
             enterTransition = { EnterTransition.None },
@@ -64,7 +68,10 @@ fun NavigationGraph(navController: NavHostController, innerPadding: PaddingValue
             exitTransition = { ExitTransition.None },
             popExitTransition = { ExitTransition.None }
         ){
-            CryptoScreen()
+            val coin = navController.previousBackStackEntry?.savedStateHandle?.get<Coin>("coin")
+            coin?.let { coin ->
+                AnalyticScreen(coin)
+            }
         }
     }
 }
