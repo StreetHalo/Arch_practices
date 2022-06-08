@@ -7,30 +7,22 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement.SpaceBetween
-import androidx.compose.foundation.layout.Arrangement.Start
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.InspectableModifier
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.arch_practices.model.Coin
-import kotlinx.coroutines.launch
 
-@Composable
-@Preview
-fun CryptoCard(coin: Coin,
+@Composable fun CryptoCard(coin: Coin,
                onMenuClick: (Coin) -> Unit,
                onCardClick: (Coin) -> Unit) {
     Card(
@@ -38,16 +30,7 @@ fun CryptoCard(coin: Coin,
         onClick = {
             onCardClick(coin)
         },
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(
-                start = 8.dp,
-                end = 8.dp,
-                top = 2.dp,
-                bottom = 2.dp
-            ),
         border = BorderStroke(1.dp, colorResource(id = R.color.card_border))
-
     ) {
         Row(
             modifier = Modifier
@@ -79,7 +62,7 @@ fun CryptoCard(coin: Coin,
                         .background(colorResource(id = R.color.white))
                 )
             }
-            
+
             Spacer(modifier = Modifier.width(12.dp))
             Column {
                 Row(
@@ -100,8 +83,6 @@ fun CryptoCard(coin: Coin,
                         )
                     }
                 }
-
-
                 Spacer(modifier = Modifier.height(4.dp))
                 Row(
                     horizontalArrangement = SpaceBetween,
@@ -122,13 +103,62 @@ fun CryptoCard(coin: Coin,
                         )
                     )
                 }
-
-                // Add a vertical space between the author and message texts
             }
         }
     }
 }
 
+@Composable
+fun FavCryptoCard(coin: Coin,
+                  onMenuClick: (Coin) -> Unit,
+                  onCardClick: (Coin) -> Unit,
+                  onSwipeToRemove: (Coin) -> Unit){
+
+    val dismissState = rememberDismissState(initialValue = DismissValue.Default)
+    if (dismissState.isDismissed(DismissDirection.EndToStart)){
+        onSwipeToRemove(coin)
+    }
+    SwipeToDismiss(
+        state = dismissState,
+        background = {
+            val direction = dismissState.dismissDirection
+            if (direction == DismissDirection.EndToStart) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    backgroundColor = Color.Red
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxSize()
+                        ) {
+                        Column(
+                            modifier = Modifier.padding(end = 8.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_baseline_delete_24),
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.align(Alignment.CenterHorizontally)
+                            )
+                            Spacer(modifier = Modifier.heightIn(2.dp))
+                            Text(
+                                text = stringResource(R.string.remove),
+                                color = Color.White
+                            )
+                        }
+                    }
+                }
+            }
+        },
+
+        dismissContent = {
+            CryptoCard(coin = coin, onMenuClick = onMenuClick, onCardClick = onCardClick)
+        },
+        directions = setOf(DismissDirection.EndToStart),
+    )
+}
 fun getColorByChangePercent(percent: Double) =
     when{
         percent > 0 -> R.color.positive_change_percent

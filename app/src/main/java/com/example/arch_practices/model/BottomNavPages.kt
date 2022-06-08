@@ -18,6 +18,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
@@ -46,18 +47,28 @@ fun FeedScreen(callBottomSheet: (Coin) -> Unit, viewModel: CoinsViewModel) {
     ) {
         LazyColumn {
             items(items = coins){ coin: Coin? ->
-                CryptoCard(Coin(
-                    name = coin?.name ?: "",
-                    priceUsd = coin?.priceUsd ?: 0.0,
-                    changePercent24Hr = coin?.changePercent24Hr ?: 0.0,
-                    symbol = coin?.symbol ?: ""
-                ),
-                    onCardClick =  { coin ->
+                Row(modifier = Modifier
+                    .fillMaxSize()
+                    .padding(
+                        start = 8.dp,
+                        end = 8.dp,
+                        top = 2.dp,
+                        bottom = 2.dp
+                    )
+                ) {
+                    CryptoCard(Coin(
+                        name = coin?.name ?: "",
+                        priceUsd = coin?.priceUsd ?: 0.0,
+                        changePercent24Hr = coin?.changePercent24Hr ?: 0.0,
+                        symbol = coin?.symbol ?: ""
+                    ),
+                        onCardClick =  { coin ->
 
-                    },
-                    onMenuClick = { coin ->
-                        callBottomSheet(coin)
-                    })
+                        },
+                        onMenuClick = { coin ->
+                            callBottomSheet(coin)
+                        })
+                }
             }
 
             coins.apply {

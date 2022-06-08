@@ -4,4 +4,5 @@
     <string name="portfolio_page_title">Portfolio</string>
     <string name="bottom_sheet_analytic">Аналитика</string>
     <string name="bottom_sheet_add_coin">Добавить %s в избранное</string>
+    <string name="remove">Удалить</string>
 </resources>
