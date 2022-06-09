@@ -6,6 +6,7 @@ import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -28,6 +29,7 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.items
 import com.example.arch_practices.CryptoCard
+import com.example.arch_practices.FavCryptoCard
 import com.example.arch_practices.R
 import com.google.accompanist.navigation.animation.AnimatedNavHost
 import com.google.accompanist.navigation.animation.composable
@@ -96,23 +98,51 @@ fun FeedScreen(callBottomSheet: (Coin) -> Unit, viewModel: CoinsViewModel) {
 }
 }
 
-@Preview
 @Composable
-fun PortfolioScreen(){
+fun PortfolioScreen(viewModel: CoinsViewModel){
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(colorResource(id = R.color.purple_700))
             .wrapContentSize(Alignment.Center)
     ) {
-        Text(
-            text = "Portfolio",
-            fontWeight = FontWeight.Bold,
-            color = Color.Black,
-            modifier = Modifier.align(Alignment.CenterHorizontally),
-            textAlign = TextAlign.Center,
-            fontSize = 20.sp
-        )
+        val coins = viewModel.getFavCoins().value ?: listOf()
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .wrapContentSize(Alignment.Center)
+        ) {
+            LazyColumn {
+                items(coins){ coin: Coin? ->
+                    Row(modifier = Modifier
+                        .fillMaxSize()
+                        .padding(
+                            start = 8.dp,
+                            end = 8.dp,
+                            top = 2.dp,
+                            bottom = 2.dp
+                        )
+                    ) {
+                        FavCryptoCard(Coin(
+                            name = coin?.name ?: "",
+                            priceUsd = coin?.priceUsd ?: 0.0,
+                            changePercent24Hr = coin?.changePercent24Hr ?: 0.0,
+                            symbol = coin?.symbol ?: ""
+                        ),
+                            onCardClick =  { coin ->
+
+                            },
+                            onMenuClick = { coin ->
+                               // callBottomSheet(coin)
+                            },
+                            onSwipeToRemove = {
+
+                            })
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -142,7 +172,7 @@ fun BottomNavigationGraph(navController: NavHostController,
             exitTransition = { ExitTransition.None },
             popExitTransition = { ExitTransition.None }
         ) {
-            PortfolioScreen()
+            PortfolioScreen(coinsViewModel)
         }
     }
 }

@@ -2,9 +2,13 @@ package com.example.arch_practices.model
 
 import android.os.Parcel
 import android.os.Parcelable
+import androidx.room.Entity
+import androidx.room.PrimaryKey
 
+@Entity
 data class Coin(
     val changePercent24Hr: Double,
+    @PrimaryKey
     val name: String,
     val priceUsd: Double,
     val symbol: String,

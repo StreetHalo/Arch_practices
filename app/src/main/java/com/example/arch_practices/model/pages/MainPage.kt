@@ -46,7 +46,10 @@ fun MainScreen(mainNav: NavController, coinsViewModel: CoinsViewModel){
                     ) {
                         TextButton(
                             onClick = {
-
+                                coroutineScope.launch {
+                                    bottomSheetState.hide()
+                                    coinsViewModel.addCoinToFav(currentCoin?: return@launch)
+                                }
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
