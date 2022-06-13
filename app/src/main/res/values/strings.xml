@@ -5,4 +5,8 @@
     <string name="bottom_sheet_analytic">Аналитика</string>
     <string name="bottom_sheet_add_coin">Добавить %s в избранное</string>
     <string name="remove">Удалить</string>
+    <string name="cancel">Отмена</string>
+    <string name="ОК">OK</string>
+    <string name="is_remove_coin">Удалить %s из избранного?</string>
+    <string name="attention">Внимание!</string>
 </resources>

@@ -1,26 +1,23 @@
 package com.example.arch_practices.model
 
+import android.util.Log
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.toUpperCase
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -34,87 +31,115 @@ import com.example.arch_practices.R
 import com.google.accompanist.navigation.animation.AnimatedNavHost
 import com.google.accompanist.navigation.animation.composable
 
-sealed class BottomNavPage(val titleId: Int, val iconId: Int, val screenRoute: String){
-    object Feed: BottomNavPage(R.string.feed_page_title,  R.drawable.ic_baseline_dns_24, "feed")
-    object Portfolio: BottomNavPage(R.string.portfolio_page_title, R.drawable.ic_baseline_work_24, "user_portfolio")
+sealed class BottomNavPage(val titleId: Int, val iconId: Int, val screenRoute: String) {
+    object Feed : BottomNavPage(R.string.feed_page_title, R.drawable.ic_baseline_dns_24, "feed")
+    object Portfolio : BottomNavPage(
+        R.string.portfolio_page_title,
+        R.drawable.ic_baseline_work_24,
+        "user_portfolio"
+    )
 }
 
 @Composable
 fun FeedScreen(callBottomSheet: (Coin) -> Unit, viewModel: CoinsViewModel) {
     val coins: LazyPagingItems<Coin> = viewModel.getCoins().collectAsLazyPagingItems()
-    Column(
+    Box(
         modifier = Modifier
-            .fillMaxWidth()
+            .fillMaxSize()
             .wrapContentSize(Alignment.Center)
     ) {
-        LazyColumn {
-            items(items = coins){ coin: Coin? ->
-                Row(modifier = Modifier
-                    .fillMaxSize()
-                    .padding(
-                        start = 8.dp,
-                        end = 8.dp,
-                        top = 2.dp,
-                        bottom = 2.dp
+        coins.apply {
+            when {
+                loadState.refresh is LoadState.Loading -> {
+
+                    Log.d("ddd", "loadState.refresh is LoadState.Loading")
+
+                    CircularProgressIndicator()
+                    //You can add modifier to manage load state when first time response page is loading
+                }
+                loadState.append is LoadState.Loading -> {
+                    if (coins.itemCount == 0) return
+                    FeedList(
+                        viewModel = viewModel,
+                        coins = coins,
+                        callBottomSheet = callBottomSheet
                     )
+                    Log.d("ddd", "loadState.append is LoadState.Loading")
+                }
+
+                loadState.append is LoadState.Error -> {
+                    //You can use modifier to show error message
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun FeedList(viewModel: CoinsViewModel,
+             coins: LazyPagingItems<Coin>,
+             callBottomSheet: (Coin) -> Unit){
+    Log.d("ddd","size ${coins.itemCount}")
+        LazyColumn {
+            items(items = coins) { coin: Coin? ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(
+                            start = 8.dp,
+                            end = 8.dp,
+                            top = 2.dp,
+                            bottom = 2.dp
+                        )
                 ) {
                     CryptoCard(Coin(
                         name = coin?.name ?: "",
                         priceUsd = coin?.priceUsd ?: 0.0,
                         changePercent24Hr = coin?.changePercent24Hr ?: 0.0,
-                        symbol = coin?.symbol ?: ""
+                        symbol = coin?.symbol ?: "",
+                        isSaved = viewModel.isAddedToFav(coin ?: return@Row)
                     ),
-                        onCardClick =  { coin ->
+                        onCardClick = { coin ->
 
                         },
                         onMenuClick = { coin ->
                             callBottomSheet(coin)
+                        },
+                        onFavClick = { coin ->
+                            if (coin.isSaved) viewModel.removeCoinFromFav(coin)
+                            else viewModel.addCoinToFav(coin)
+                            coins.refresh()
+                            //coins.peek(0)
+                            //coins.retry()
                         })
                 }
             }
-
-            coins.apply {
-                when {
-                    loadState.refresh is LoadState.Loading -> {
-                        //You can add modifier to manage load state when first time response page is loading
-                    }
-                    loadState.append is LoadState.Loading -> {
-                        item {
-                            Column(modifier = Modifier
-                                .fillMaxWidth()
-                                .wrapContentSize(Alignment.Center)
-                            ) {
-                                CircularProgressIndicator()
-                            }
-                        }
-
-                    }
-                    loadState.append is LoadState.Error -> {
-                        //You can use modifier to show error message
-                    }
-                }
         }
-    }
-}
 }
 
 @Composable
 fun PortfolioScreen(viewModel: CoinsViewModel){
-    Column(
+    val coins by viewModel.getFavCoins().observeAsState(initial = emptyList())
+    val isShowDialog = remember { mutableStateOf(false)  }
+    val selectedCoin: MutableState<Coin?> = remember{ mutableStateOf(null)}
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(colorResource(id = R.color.purple_700))
-            .wrapContentSize(Alignment.Center)
     ) {
-        val coins = viewModel.getFavCoins().value ?: listOf()
-
+        RemoveCoinDialog(
+            isOpenDialog = isShowDialog,
+            coin = selectedCoin.value,
+            onRemoveCoin = {coin ->
+                viewModel.removeCoinFromFav(coin)
+            }
+        )
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .wrapContentSize(Alignment.Center)
+                .fillMaxSize()
+                .wrapContentSize(Alignment.TopCenter)
         ) {
             LazyColumn {
-                items(coins){ coin: Coin? ->
+                items(items = coins){ coin: Coin? ->
                     Row(modifier = Modifier
                         .fillMaxSize()
                         .padding(
@@ -133,17 +158,55 @@ fun PortfolioScreen(viewModel: CoinsViewModel){
                             onCardClick =  { coin ->
 
                             },
-                            onMenuClick = { coin ->
-                               // callBottomSheet(coin)
-                            },
-                            onSwipeToRemove = {
-
+                            onSwipeToRemove = { coin ->
+                                selectedCoin.value = coin
+                                isShowDialog.value = true
                             })
                     }
                 }
             }
         }
     }
+}
+
+@Composable
+fun RemoveCoinDialog(
+    coin: Coin?,
+    isOpenDialog: MutableState<Boolean>,
+    onRemoveCoin: (Coin) -> Unit
+) {
+    if(!isOpenDialog.value) return
+    AlertDialog(
+        onDismissRequest = {
+          isOpenDialog.value = false
+    },
+        title = {
+            Text(text = stringResource(id = R.string.attention))
+        },
+        text = {
+            Text(stringResource(id = R.string.is_remove_coin, coin?.name ?: ""))
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    isOpenDialog.value = false
+                    onRemoveCoin(coin ?: return@TextButton)
+                }) {
+                Text(
+                    stringResource(id = R.string.ОК).uppercase()
+                )
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = {
+                    isOpenDialog.value = false
+                }) {
+                Text(
+                    stringResource(id = R.string.cancel).uppercase(),
+                )
+            }
+        })
 }
 
 @OptIn(ExperimentalAnimationApi::class)

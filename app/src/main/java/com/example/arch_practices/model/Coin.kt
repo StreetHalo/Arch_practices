@@ -12,12 +12,14 @@ data class Coin(
     val name: String,
     val priceUsd: Double,
     val symbol: String,
-): Parcelable {
+    var isSaved: Boolean = false
+) : Parcelable {
     constructor(parcel: Parcel) : this(
         parcel.readDouble(),
         parcel.readString().toString(),
         parcel.readDouble(),
-        parcel.readString().toString()
+        parcel.readString().toString(),
+        parcel.readByte() != 0.toByte()
     ) {
     }
 
@@ -26,6 +28,7 @@ data class Coin(
         parcel.writeString(name)
         parcel.writeDouble(priceUsd)
         parcel.writeString(symbol)
+        parcel.writeByte(if (isSaved) 1 else 0)
     }
 
     override fun describeContents(): Int {
@@ -41,4 +44,5 @@ data class Coin(
             return arrayOfNulls(size)
         }
     }
+
 }

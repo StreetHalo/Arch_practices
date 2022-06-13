@@ -2,6 +2,7 @@
 
 package com.example.arch_practices
 
+import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -10,6 +11,8 @@ import androidx.compose.foundation.layout.Arrangement.SpaceBetween
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -21,10 +24,15 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.arch_practices.model.Coin
+import kotlinx.coroutines.launch
 
-@Composable fun CryptoCard(coin: Coin,
-               onMenuClick: (Coin) -> Unit,
-               onCardClick: (Coin) -> Unit) {
+@Composable
+fun CryptoCard(
+    coin: Coin,
+    onMenuClick: (Coin) -> Unit,
+    onCardClick: (Coin) -> Unit,
+    onFavClick: (Coin) -> Unit
+) {
     Card(
         elevation = 4.dp,
         onClick = {
@@ -73,14 +81,30 @@ import com.example.arch_practices.model.Coin
                         text = coin.name,
                         fontSize = 16.sp
                     )
-                    IconButton(
-                        modifier = Modifier.
-                        then(Modifier.size(20.dp)),
-                        onClick = { onMenuClick(coin) }){
-                        Icon(
-                            painterResource(id = R.drawable.ic_baseline_more_vert_24),
-                            contentDescription = null,
-                        )
+                    Row {
+                        IconButton(
+                            modifier = Modifier.
+                            then(
+                                Modifier
+                                    .size(22.dp)
+                                    .padding(end = 4.dp)),
+                            onClick = { onFavClick(coin) }){
+                            Image(
+                                painterResource(
+                                    id = if(coin.isSaved) R.drawable.ic_baseline_star_rate_24
+                                    else R.drawable.ic_baseline_star_border_24),
+                                contentDescription = null,
+                            )
+                        }
+                        IconButton(
+                            modifier = Modifier.
+                            then(Modifier.size(20.dp)),
+                            onClick = { onMenuClick(coin) }){
+                            Icon(
+                                painterResource(id = R.drawable.ic_baseline_more_vert_24),
+                                contentDescription = null,
+                            )
+                        }
                     }
                 }
                 Spacer(modifier = Modifier.height(4.dp))
@@ -110,14 +134,17 @@ import com.example.arch_practices.model.Coin
 
 @Composable
 fun FavCryptoCard(coin: Coin,
-                  onMenuClick: (Coin) -> Unit,
                   onCardClick: (Coin) -> Unit,
                   onSwipeToRemove: (Coin) -> Unit){
-
+    val coroutineScope = rememberCoroutineScope()
     val dismissState = rememberDismissState(initialValue = DismissValue.Default)
     if (dismissState.isDismissed(DismissDirection.EndToStart)){
         onSwipeToRemove(coin)
+        coroutineScope.launch {
+            dismissState.snapTo(DismissValue.Default)
+        }
     }
+
     SwipeToDismiss(
         state = dismissState,
         background = {
@@ -154,7 +181,78 @@ fun FavCryptoCard(coin: Coin,
         },
 
         dismissContent = {
-            CryptoCard(coin = coin, onMenuClick = onMenuClick, onCardClick = onCardClick)
+            Card(
+                elevation = 4.dp,
+                onClick = {
+                    onCardClick(coin)
+                },
+                border = BorderStroke(1.dp, colorResource(id = R.color.card_border))
+            ) {
+                Row(
+                    modifier = Modifier
+                        .padding(
+                            start = 16.dp,
+                            end = 8.dp,
+                            top = 8.dp,
+                            bottom = 8.dp
+                        ),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Box(contentAlignment = Alignment.BottomEnd){
+                        Image(
+                            painter = painterResource(R.drawable.coin),
+                            contentDescription = "Contact profile picture",
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .background(colorResource(id = R.color.gold))
+                        )
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_baseline_check_circle_24),
+                            contentDescription = "",
+                            tint = colorResource(id = R.color.gold),
+                            modifier = Modifier
+                                .size(14.dp)
+                                .clip(CircleShape)
+                                .fillMaxWidth()
+                                .background(colorResource(id = R.color.white))
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Row(
+                            horizontalArrangement = Arrangement.Start,
+                            modifier = Modifier.fillMaxWidth()
+                        ){
+                            Text(
+                                text = coin.name,
+                                fontSize = 16.sp
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Row(
+                            horizontalArrangement = SpaceBetween,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = "$ ${coin.priceUsd}",
+                                fontSize = 12.sp,
+                                modifier = Modifier.alpha(0.7f)
+                            )
+                            Text(
+                                text = "${coin.changePercent24Hr}%",
+                                fontSize = 12.sp,
+                                color = colorResource(id = getColorByChangePercent(coin.changePercent24Hr)),
+                                modifier = Modifier.padding(
+                                    start = 12.dp,
+                                    end = 2.dp
+                                )
+                            )
+                        }
+                    }
+                }
+            }
         },
         directions = setOf(DismissDirection.EndToStart),
     )
