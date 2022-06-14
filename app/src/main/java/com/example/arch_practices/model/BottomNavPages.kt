@@ -16,7 +16,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.toUpperCase
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
@@ -25,11 +24,13 @@ import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.items
+import com.example.arch_practices.App
 import com.example.arch_practices.CryptoCard
 import com.example.arch_practices.FavCryptoCard
 import com.example.arch_practices.R
 import com.google.accompanist.navigation.animation.AnimatedNavHost
 import com.google.accompanist.navigation.animation.composable
+import kotlinx.coroutines.launch
 
 sealed class BottomNavPage(val titleId: Int, val iconId: Int, val screenRoute: String) {
     object Feed : BottomNavPage(R.string.feed_page_title, R.drawable.ic_baseline_dns_24, "feed")
@@ -43,43 +44,14 @@ sealed class BottomNavPage(val titleId: Int, val iconId: Int, val screenRoute: S
 @Composable
 fun FeedScreen(callBottomSheet: (Coin) -> Unit, viewModel: CoinsViewModel) {
     val coins: LazyPagingItems<Coin> = viewModel.getCoins().collectAsLazyPagingItems()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
+
     Box(
         modifier = Modifier
             .fillMaxSize()
             .wrapContentSize(Alignment.Center)
     ) {
-        coins.apply {
-            when {
-                loadState.refresh is LoadState.Loading -> {
-
-                    Log.d("ddd", "loadState.refresh is LoadState.Loading")
-
-                    CircularProgressIndicator()
-                    //You can add modifier to manage load state when first time response page is loading
-                }
-                loadState.append is LoadState.Loading -> {
-                    if (coins.itemCount == 0) return
-                    FeedList(
-                        viewModel = viewModel,
-                        coins = coins,
-                        callBottomSheet = callBottomSheet
-                    )
-                    Log.d("ddd", "loadState.append is LoadState.Loading")
-                }
-
-                loadState.append is LoadState.Error -> {
-                    //You can use modifier to show error message
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun FeedList(viewModel: CoinsViewModel,
-             coins: LazyPagingItems<Coin>,
-             callBottomSheet: (Coin) -> Unit){
-    Log.d("ddd","size ${coins.itemCount}")
         LazyColumn {
             items(items = coins) { coin: Coin? ->
                 Row(
@@ -108,19 +80,56 @@ fun FeedList(viewModel: CoinsViewModel,
                         onFavClick = { coin ->
                             if (coin.isSaved) viewModel.removeCoinFromFav(coin)
                             else viewModel.addCoinToFav(coin)
+                            coroutineScope.launch {
+                                snackbarHostState.showSnackbar(
+                                    message = if(coin.isSaved) App.instance.getString(R.string.coin_removed, coin.name)
+                                    else App.instance.getString(R.string.coin_added, coin.name)
+                                )
+                            }
                             coins.refresh()
-                            //coins.peek(0)
-                            //coins.retry()
-                        })
+                        }
+                    )
+                }
+            }
+
+            coins.apply {
+                when {
+                    loadState.refresh is LoadState.Loading -> {
+
+                        item {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator()
+                            }
+                        }
+                        //You can add modifier to manage load state when first time response page is loading
+                    }
+                    loadState.append is LoadState.Loading -> {
+                        item { CircularProgressIndicator() }
+
+                    }
+
+                    loadState.append is LoadState.Error -> {
+                        //You can use modifier to show error message
+                    }
                 }
             }
         }
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier.align(Alignment.BottomCenter)
+        )
+    }
 }
 
 @Composable
 fun PortfolioScreen(viewModel: CoinsViewModel){
     val coins by viewModel.getFavCoins().observeAsState(initial = emptyList())
     val isShowDialog = remember { mutableStateOf(false)  }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
     val selectedCoin: MutableState<Coin?> = remember{ mutableStateOf(null)}
     Box(
         modifier = Modifier
@@ -131,6 +140,11 @@ fun PortfolioScreen(viewModel: CoinsViewModel){
             coin = selectedCoin.value,
             onRemoveCoin = {coin ->
                 viewModel.removeCoinFromFav(coin)
+                coroutineScope.launch {
+                    snackbarHostState.showSnackbar(
+                        message = App.instance.getString(R.string.coin_removed, coin.name)
+                    )
+                }
             }
         )
         Column(
@@ -166,6 +180,10 @@ fun PortfolioScreen(viewModel: CoinsViewModel){
                 }
             }
         }
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier.align(Alignment.BottomCenter),
+        )
     }
 }
 
@@ -239,7 +257,6 @@ fun BottomNavigationGraph(navController: NavHostController,
         }
     }
 }
-
 
 @Composable
 fun BottomNavigation(navController: NavController){
