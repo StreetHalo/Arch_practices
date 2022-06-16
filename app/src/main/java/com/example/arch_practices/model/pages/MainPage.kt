@@ -7,6 +7,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -33,13 +35,13 @@ fun MainScreen(mainNav: NavController, coinsViewModel: CoinsViewModel){
 
     val coroutineScope = rememberCoroutineScope()
     val bottomSheetState = rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
-    var currentCoin: Coin? = null
+    val currentCoin = remember { mutableStateOf<Coin?>(null)}
 
     ModalBottomSheetLayout(
         sheetState = bottomSheetState,
         sheetContent = {
             bottomSheetState.currentValue.let {
-                if(currentCoin == null) Row(modifier = Modifier.height(1.dp)){}
+                if(currentCoin.value == null) Row(modifier = Modifier.height(1.dp)){}
                 else {
                     Column(
                         modifier = Modifier.fillMaxWidth()
@@ -48,7 +50,7 @@ fun MainScreen(mainNav: NavController, coinsViewModel: CoinsViewModel){
                             onClick = {
                                 coroutineScope.launch {
                                     bottomSheetState.hide()
-                                    coinsViewModel.addCoinToFav(currentCoin?: return@launch)
+                                    coinsViewModel.addCoinToFav(currentCoin.value ?: return@launch)
                                 }
                             },
                             modifier = Modifier
@@ -56,7 +58,7 @@ fun MainScreen(mainNav: NavController, coinsViewModel: CoinsViewModel){
                                 .height(48.dp)
                         ) {
                             Text(
-                                text = stringResource(id = R.string.bottom_sheet_add_coin, currentCoin?.name ?: ""),
+                                text = stringResource(id = R.string.bottom_sheet_add_coin, currentCoin.value?.name ?: ""),
                                 style = TextStyle.Default,
                                 color = Color.Black
                             )
@@ -72,7 +74,7 @@ fun MainScreen(mainNav: NavController, coinsViewModel: CoinsViewModel){
                             onClick = {
                                 coroutineScope.launch {
                                     bottomSheetState.hide()
-                                    mainNav.currentBackStackEntry?.savedStateHandle?.set("coin", currentCoin)
+                                    mainNav.currentBackStackEntry?.savedStateHandle?.set("coin", currentCoin.value)
                                     mainNav.navigate(Pages.Analytic.screenRoute)
                                 }
                             },
@@ -137,10 +139,17 @@ fun MainScreen(mainNav: NavController, coinsViewModel: CoinsViewModel){
             }
         ) { innerPadding ->
             BottomNavigationGraph(bottomNavController, innerPadding, coinsViewModel, callBottomSheet = { coin ->
-                currentCoin = coin
+                currentCoin.value = coin
                 coroutineScope.launch {
                     bottomSheetState.show()
-                } })
+                } },
+            onCardCoin = { coin ->
+                coroutineScope.launch {
+                    bottomSheetState.hide()
+                    mainNav.currentBackStackEntry?.savedStateHandle?.set("coin", coin)
+                    mainNav.navigate(Pages.Analytic.screenRoute)
+                }
+            })
         }
     }
 }

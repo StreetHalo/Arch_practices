@@ -10,12 +10,14 @@ data class Coin(
     val changePercent24Hr: Double,
     @PrimaryKey
     val name: String,
+    val id: String = "",
     val priceUsd: Double,
     val symbol: String,
     var isSaved: Boolean = false
 ) : Parcelable {
     constructor(parcel: Parcel) : this(
         parcel.readDouble(),
+        parcel.readString().toString(),
         parcel.readString().toString(),
         parcel.readDouble(),
         parcel.readString().toString(),
@@ -26,6 +28,7 @@ data class Coin(
     override fun writeToParcel(parcel: Parcel, flags: Int) {
         parcel.writeDouble(changePercent24Hr)
         parcel.writeString(name)
+        parcel.writeString(id)
         parcel.writeDouble(priceUsd)
         parcel.writeString(symbol)
         parcel.writeByte(if (isSaved) 1 else 0)

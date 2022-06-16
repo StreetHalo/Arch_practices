@@ -42,7 +42,10 @@ sealed class BottomNavPage(val titleId: Int, val iconId: Int, val screenRoute: S
 }
 
 @Composable
-fun FeedScreen(callBottomSheet: (Coin) -> Unit, viewModel: CoinsViewModel) {
+fun FeedScreen(
+    callBottomSheet: (Coin) -> Unit,
+    onCardCoin: (Coin) -> Unit,
+    viewModel: CoinsViewModel) {
     val coins: LazyPagingItems<Coin> = viewModel.getCoins().collectAsLazyPagingItems()
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
@@ -65,6 +68,7 @@ fun FeedScreen(callBottomSheet: (Coin) -> Unit, viewModel: CoinsViewModel) {
                         )
                 ) {
                     CryptoCard(Coin(
+                        id = coin?.id ?: "",
                         name = coin?.name ?: "",
                         priceUsd = coin?.priceUsd ?: 0.0,
                         changePercent24Hr = coin?.changePercent24Hr ?: 0.0,
@@ -72,7 +76,7 @@ fun FeedScreen(callBottomSheet: (Coin) -> Unit, viewModel: CoinsViewModel) {
                         isSaved = viewModel.isAddedToFav(coin ?: return@Row)
                     ),
                         onCardClick = { coin ->
-
+                            onCardCoin(coin)
                         },
                         onMenuClick = { coin ->
                             callBottomSheet(coin)
@@ -164,6 +168,7 @@ fun PortfolioScreen(viewModel: CoinsViewModel){
                         )
                     ) {
                         FavCryptoCard(Coin(
+                            id = coin?.id ?: "",
                             name = coin?.name ?: "",
                             priceUsd = coin?.priceUsd ?: 0.0,
                             changePercent24Hr = coin?.changePercent24Hr ?: 0.0,
@@ -232,7 +237,8 @@ fun RemoveCoinDialog(
 fun BottomNavigationGraph(navController: NavHostController,
                           innerPadding: PaddingValues,
                           coinsViewModel: CoinsViewModel,
-                          callBottomSheet: (Coin) -> Unit) {
+                          callBottomSheet: (Coin) -> Unit,
+                          onCardCoin: (Coin) -> Unit) {
     AnimatedNavHost(
         navController,
         modifier = Modifier.padding(innerPadding),
@@ -244,7 +250,7 @@ fun BottomNavigationGraph(navController: NavHostController,
             exitTransition = { ExitTransition.None },
             popExitTransition = { ExitTransition.None }
         ) {
-            FeedScreen(callBottomSheet, coinsViewModel)
+            FeedScreen(callBottomSheet, onCardCoin, coinsViewModel)
         }
         composable(
             BottomNavPage.Portfolio.screenRoute,
