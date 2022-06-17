@@ -1,11 +1,9 @@
 @file:OptIn(ExperimentalMaterialApi::class)
 
-package com.example.arch_practices
+package com.example.arch_practices.views
 
-import android.net.Uri
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement.SpaceBetween
 import androidx.compose.foundation.shape.CircleShape
@@ -17,13 +15,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.rememberAsyncImagePainter
-import coil.compose.rememberImagePainter
+import coil.compose.*
+import coil.request.ImageRequest
+import com.example.arch_practices.App
+import com.example.arch_practices.R
 import com.example.arch_practices.extensions.formatNumbersAfterDot
 import com.example.arch_practices.model.Coin
 import kotlinx.coroutines.launch
@@ -71,7 +72,8 @@ fun CryptoCard(
                             Image(
                                 painterResource(
                                     id = if(coin.isSaved) R.drawable.ic_baseline_star_rate_24
-                                    else R.drawable.ic_baseline_star_border_24),
+                                    else R.drawable.ic_baseline_star_border_24
+                                ),
                                 contentDescription = null,
                             )
                         }
@@ -230,15 +232,30 @@ fun PriceCoinText(coin: Coin){
 fun AvatarCoin(coin: Coin){
     val coinName = coin.symbol.lowercase()
     val uriPath = "android.resource://" + App.instance.packageName.toString() + "/drawable/${coinName}"
-    val uri: Uri = Uri.parse(uriPath)
 
     Box(contentAlignment = Alignment.BottomEnd){
-        Image(
-            painter = rememberAsyncImagePainter(uri, placeholder = painterResource(id = R.drawable.ic_baseline_currency_bitcoin_24)),
+        SubcomposeAsyncImage(
+            model = ImageRequest.Builder(LocalContext.current)
+                .data(uriPath)
+                .crossfade(true)
+                .build(),
             contentDescription = " ",
             modifier = Modifier
                 .size(40.dp)
                 .clip(CircleShape)
         )
+        {
+            val state = painter.state
+            if (state is AsyncImagePainter.State.Loading || state is AsyncImagePainter.State.Error) {
+                Image(
+                    painter = painterResource(id = R.drawable.ic_baseline_currency_bitcoin_24),
+                    contentDescription = " ",
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                )
+            }
+            else SubcomposeAsyncImageContent()
+        }
     }
 }

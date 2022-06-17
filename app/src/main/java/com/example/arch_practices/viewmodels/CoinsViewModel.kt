@@ -1,7 +1,5 @@
-package com.example.arch_practices.model
+package com.example.arch_practices.viewmodels
 
-import android.util.Log
-import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -9,15 +7,14 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
-import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.room.Room
 import com.example.arch_practices.App
+import com.example.arch_practices.model.Coin
 import com.example.arch_practices.utils.AppDatabase
 import com.example.arch_practices.utils.CoinDao
 import com.example.arch_practices.utils.PagingCoin
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 

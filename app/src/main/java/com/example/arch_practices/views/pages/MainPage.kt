@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalAnimationApi::class, ExperimentalMaterialApi::class)
 
-package com.example.arch_practices.model.pages
+package com.example.arch_practices.views.pages
 
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.background
@@ -21,6 +21,9 @@ import androidx.navigation.NavController
 import com.example.arch_practices.R
 import com.example.arch_practices.model.Coin
 import com.example.arch_practices.model.*
+import com.example.arch_practices.viewmodels.CoinsViewModel
+import com.example.arch_practices.navigations.BottomNavigation
+import com.example.arch_practices.navigations.BottomNavigationGraph
 import com.google.accompanist.navigation.animation.rememberAnimatedNavController
 import kotlinx.coroutines.launch
 
