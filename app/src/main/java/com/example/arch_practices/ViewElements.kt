@@ -2,7 +2,7 @@
 
 package com.example.arch_practices
 
-import android.util.Log
+import android.net.Uri
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.Arrangement.SpaceBetween
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -23,6 +22,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.rememberAsyncImagePainter
+import coil.compose.rememberImagePainter
+import com.example.arch_practices.extensions.formatNumbersAfterDot
 import com.example.arch_practices.model.Coin
 import kotlinx.coroutines.launch
 
@@ -50,37 +52,14 @@ fun CryptoCard(
                 ),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Box(contentAlignment = Alignment.BottomEnd){
-                Image(
-                    painter = painterResource(R.drawable.coin),
-                    contentDescription = "Contact profile picture",
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .background(colorResource(id = R.color.gold))
-                )
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_baseline_check_circle_24),
-                    contentDescription = "",
-                    tint = colorResource(id = R.color.gold),
-                    modifier = Modifier
-                        .size(14.dp)
-                        .clip(CircleShape)
-                        .fillMaxWidth()
-                        .background(colorResource(id = R.color.white))
-                )
-            }
-
+            AvatarCoin(coin = coin)
             Spacer(modifier = Modifier.width(12.dp))
             Column {
                 Row(
                     horizontalArrangement = SpaceBetween,
                     modifier = Modifier.fillMaxWidth()
                 ){
-                    Text(
-                        text = coin.name,
-                        fontSize = 16.sp
-                    )
+                    TitleCoinText(coin = coin)
                     Row {
                         IconButton(
                             modifier = Modifier.
@@ -112,20 +91,8 @@ fun CryptoCard(
                     horizontalArrangement = SpaceBetween,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(
-                        text = "$ ${coin.priceUsd}",
-                        fontSize = 12.sp,
-                        modifier = Modifier.alpha(0.7f)
-                    )
-                    Text(
-                        text = "${coin.changePercent24Hr}%",
-                        fontSize = 12.sp,
-                        color = colorResource(id = getColorByChangePercent(coin.changePercent24Hr)),
-                        modifier = Modifier.padding(
-                            start = 12.dp,
-                            end = 2.dp
-                        )
-                    )
+                    PriceCoinText(coin = coin)
+                    PercentCoinText(coin = coin)
                 }
             }
         }
@@ -198,57 +165,22 @@ fun FavCryptoCard(coin: Coin,
                         ),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Box(contentAlignment = Alignment.BottomEnd){
-                        Image(
-                            painter = painterResource(R.drawable.coin),
-                            contentDescription = "Contact profile picture",
-                            modifier = Modifier
-                                .size(40.dp)
-                                .clip(CircleShape)
-                                .background(colorResource(id = R.color.gold))
-                        )
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_baseline_check_circle_24),
-                            contentDescription = "",
-                            tint = colorResource(id = R.color.gold),
-                            modifier = Modifier
-                                .size(14.dp)
-                                .clip(CircleShape)
-                                .fillMaxWidth()
-                                .background(colorResource(id = R.color.white))
-                        )
-                    }
-
+                    AvatarCoin(coin = coin)
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
                         Row(
                             horizontalArrangement = Arrangement.Start,
                             modifier = Modifier.fillMaxWidth()
                         ){
-                            Text(
-                                text = coin.name,
-                                fontSize = 16.sp
-                            )
+                            TitleCoinText(coin = coin)
                         }
                         Spacer(modifier = Modifier.height(4.dp))
                         Row(
                             horizontalArrangement = SpaceBetween,
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text(
-                                text = "$ ${coin.priceUsd}",
-                                fontSize = 12.sp,
-                                modifier = Modifier.alpha(0.7f)
-                            )
-                            Text(
-                                text = "${coin.changePercent24Hr}%",
-                                fontSize = 12.sp,
-                                color = colorResource(id = getColorByChangePercent(coin.changePercent24Hr)),
-                                modifier = Modifier.padding(
-                                    start = 12.dp,
-                                    end = 2.dp
-                                )
-                            )
+                            PriceCoinText(coin = coin)
+                            PercentCoinText(coin = coin)
                         }
                     }
                 }
@@ -263,3 +195,50 @@ fun getColorByChangePercent(percent: Double) =
         percent < 0 -> R.color.negative_change_percent
         else -> R.color.non_change_percent
     }
+
+@Composable
+fun TitleCoinText(coin: Coin){
+    Text(
+        text = coin.name,
+        fontSize = 16.sp
+    )
+}
+
+@Composable
+fun PercentCoinText(coin: Coin){
+    Text(
+        text = "${coin.changePercent24Hr.formatNumbersAfterDot()}%",
+        fontSize = 12.sp,
+        color = colorResource(id = getColorByChangePercent(coin.changePercent24Hr)),
+        modifier = Modifier.padding(
+            start = 12.dp,
+            end = 2.dp
+        )
+    )
+}
+
+@Composable
+fun PriceCoinText(coin: Coin){
+    Text(
+        text = "$ ${coin.priceUsd.formatNumbersAfterDot(4)}",
+        fontSize = 12.sp,
+        modifier = Modifier.alpha(0.7f)
+    )
+}
+
+@Composable
+fun AvatarCoin(coin: Coin){
+    val coinName = coin.symbol.lowercase()
+    val uriPath = "android.resource://" + App.instance.packageName.toString() + "/drawable/${coinName}"
+    val uri: Uri = Uri.parse(uriPath)
+
+    Box(contentAlignment = Alignment.BottomEnd){
+        Image(
+            painter = rememberAsyncImagePainter(uri, placeholder = painterResource(id = R.drawable.ic_baseline_currency_bitcoin_24)),
+            contentDescription = " ",
+            modifier = Modifier
+                .size(40.dp)
+                .clip(CircleShape)
+        )
+    }
+}
