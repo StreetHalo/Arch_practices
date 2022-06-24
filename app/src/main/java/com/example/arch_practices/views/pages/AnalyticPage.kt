@@ -28,24 +28,27 @@ import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineDataSet
 
 @Composable
-fun AnalyticScreen(analyticViewModel: AnalyticViewModel) {
+fun AnalyticScreen(
+    analyticViewModel: AnalyticViewModel,
+    onBackPressed: () -> Unit
+) {
     val dataState by analyticViewModel.getDataState().observeAsState(DataState.Loading(PeriodType.h1))
     val currentCoin by analyticViewModel.getCurrentCoin().observeAsState()
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
-                    Text(text = stringResource(id = R.string.app_name))
+                    Text(text = stringResource(id = R.string.analytic_page))
                 },
-                backgroundColor = Color.Blue,
-                contentColor = Color.White,
-                elevation = 12.dp,
+                backgroundColor = Color.White,
+                contentColor = Color.Black,
+                elevation = 0.dp,
                 navigationIcon = {
                     IconButton(
                         onClick = {
-
+                            onBackPressed()
                         }) {
-                        Icon(painter = painterResource(com.google.android.material.R.drawable.material_ic_keyboard_arrow_left_black_24dp), contentDescription = "")
+                        Icon(painter = painterResource(R.drawable.ic_baseline_arrow_back_24), contentDescription = "")
                     }
                 }
             )

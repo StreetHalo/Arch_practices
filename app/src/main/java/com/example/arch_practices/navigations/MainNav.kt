@@ -48,7 +48,9 @@ fun NavigationGraph(
         ){
             val coin = navController.previousBackStackEntry?.savedStateHandle?.get<Coin>("coin") ?: return@composable
             analyticViewModel.setCoin(coin)
-            AnalyticScreen(analyticViewModel)
+            AnalyticScreen(analyticViewModel, onBackPressed = {
+                navController.popBackStack()
+            })
         }
     }
 }

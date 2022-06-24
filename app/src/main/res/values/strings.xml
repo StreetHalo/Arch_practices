@@ -11,4 +11,6 @@
     <string name="attention">Внимание!</string>
     <string name="coin_added">%s добавлен в избранное</string>
     <string name="coin_removed">%s удален из избранного</string>
+    <string name="analytic_page">Аналитика</string>
+
 </resources>

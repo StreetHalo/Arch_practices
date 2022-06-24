@@ -35,7 +35,6 @@ sealed class Pages(val screenRoute: String){
 @Composable
 fun MainScreen(mainNav: NavController, coinsViewModel: CoinsViewModel){
     val bottomNavController = rememberAnimatedNavController()
-
     val coroutineScope = rememberCoroutineScope()
     val bottomSheetState = rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
     val currentCoin = remember { mutableStateOf<Coin?>(null)}
@@ -119,24 +118,6 @@ fun MainScreen(mainNav: NavController, coinsViewModel: CoinsViewModel){
             }
         }) {
         Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = {
-                        Text(text = stringResource(id = R.string.app_name))
-                    },
-                    backgroundColor = Color.Blue,
-                    contentColor = Color.White,
-                    elevation = 12.dp,
-                    navigationIcon = {
-                        IconButton(
-                            onClick = {
-
-                            }) {
-                            Icon(painter = painterResource(id = R.drawable.ic_baseline_check_circle_24), contentDescription = "")
-                        }
-                    }
-                )
-            },
             bottomBar = {
                 BottomNavigation(navController = bottomNavController)
             }
