@@ -17,7 +17,12 @@ interface Api {
     suspend fun getCoins(@Query("offset") offset: Int): Response<Coin>
 
     @GET("assets/{id}/history")
-    suspend fun getHistoryById(@Path("id") coinId: String, @Query("interval") interval: IntervalType): Response<History>
+    suspend fun getHistoryById(
+        @Path("id") coinId: String,
+        @Query("interval") interval: IntervalType,
+        @Query("start") start: Long,
+        @Query("end") end: Long
+    ): Response<History>
 
     companion object {
         private var api: Api? = null

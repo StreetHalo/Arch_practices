@@ -233,7 +233,7 @@ fun AvatarCoin(coin: Coin){
     val coinName = coin.symbol.lowercase()
     val uriPath = "android.resource://" + App.instance.packageName.toString() + "/drawable/${coinName}"
 
-    Box(contentAlignment = Alignment.BottomEnd){
+    Box(contentAlignment = Alignment.Center){
         SubcomposeAsyncImage(
             model = ImageRequest.Builder(LocalContext.current)
                 .data(uriPath)
