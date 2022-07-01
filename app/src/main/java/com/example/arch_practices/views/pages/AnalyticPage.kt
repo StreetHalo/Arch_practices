@@ -24,8 +24,11 @@ import com.example.arch_practices.extensions.setLineDataSet
 import com.example.arch_practices.model.*
 import com.example.arch_practices.views.AvatarCoin
 import com.github.mikephil.charting.charts.LineChart
+import com.github.mikephil.charting.components.AxisBase
 import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineDataSet
+import com.github.mikephil.charting.formatter.ValueFormatter
+import java.util.*
 
 @Composable
 fun AnalyticScreen(
@@ -33,7 +36,7 @@ fun AnalyticScreen(
     onBackPressed: () -> Unit
 ) {
     val dataState by analyticViewModel.getDataState().observeAsState(DataState.Loading(PeriodType.h1))
-    val currentCoin by analyticViewModel.getCurrentCoin().observeAsState()
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -55,8 +58,8 @@ fun AnalyticScreen(
         }
     ) {
         AnalyticPage(
-            coin = currentCoin ?: return@Scaffold,
-            dataState = dataState, onSelectTimeRange = {
+            dataState,
+            analyticViewModel, onSelectTimeRange = {
             analyticViewModel.setIntervalType(it)
         }
         )
@@ -65,8 +68,8 @@ fun AnalyticScreen(
 
 @Composable
 fun AnalyticPage(
-    coin: Coin,
     dataState: DataState,
+    analyticViewModel: AnalyticViewModel,
     onSelectTimeRange: (PeriodType) -> Unit
 ){
     LazyColumn(
@@ -74,7 +77,7 @@ fun AnalyticPage(
             .fillMaxSize()
             .wrapContentSize(Alignment.TopCenter)
     ) {
-        item { Header(coin = coin, dataState = dataState) }
+        item { Header(analyticViewModel) }
         item { TimeRangePicker(
             selectedTimeRange = dataState.periodType,
             onTimeRangeSelected = {
@@ -83,19 +86,16 @@ fun AnalyticPage(
             }
         ) }
         item {
-            when(dataState){
-                is DataState.Loading ->
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .requiredHeight(300.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
-                    }
-                is DataState.Error -> {}
-                is DataState.Finished -> {
-                     Chart(lineDataSet = dataState.data)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .requiredHeight(300.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                when(dataState){
+                    is DataState.Loading -> CircularProgressIndicator()
+                    is DataState.Error -> ErrorPage()
+                    is DataState.Finished -> Chart(lineDataSet = dataState.data)
                 }
             }
         }
@@ -103,17 +103,13 @@ fun AnalyticPage(
 }
 
 @Composable
-fun Header(coin: Coin, dataState: DataState){
-    val data = if(dataState is DataState.Finished) dataState.data.values else listOf()
-    val isGrow = getDifferentPrice(data) > 0f
-    val isVisible = data.isNotEmpty()
-
+fun Header(analyticViewModel: AnalyticViewModel){
     Row(
         modifier = Modifier
             .padding(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        AvatarCoin(coin = coin)
+        AvatarCoin(coin = analyticViewModel.getCurrentCoin() ?: return)
         Column(
             modifier = Modifier
                 .weight(1f)
@@ -121,12 +117,11 @@ fun Header(coin: Coin, dataState: DataState){
                 .padding(start = 8.dp)
         ) {
             Text(
-                text = "$ ${data.lastOrNull()?.y?.toDouble().formatNumbersAfterDot()}",
+                text = analyticViewModel.getCurrentCoinPrice(),
                 fontSize = 16.sp,
-                modifier = Modifier.alpha(if(isVisible) 1f else 0f)
             )
             Text(
-                text = coin.name,
+                text = analyticViewModel.getCurrentCoin()?.name ?: "",
                 fontSize = 12.sp,
                 modifier = Modifier.alpha(0.7f)
             )
@@ -147,38 +142,17 @@ fun Header(coin: Coin, dataState: DataState){
             Column{
                 Text(
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier.align(Alignment.End).alpha(if(isVisible) 1f else 0f)
-                    ,
-                    text = "$ " + if(isGrow) "+" else {""} + getDifferentPrice(data).formatNumbersAfterDot()
+                    text = analyticViewModel.getFormattedDifferentPrice()
                 )
                 Text(
-                    modifier = Modifier.align(Alignment.End).alpha(if(isVisible) 1f else 0f),
-                    text = getDifferentPercent(data).formatNumbersAfterDot() + "%"
+                    text = analyticViewModel.getFormattedDifferentPercent()
                 )
             }
             Image(painter = painterResource(
-                if(isGrow) R.drawable.ic_baseline_arrow_drop_up_24
-                else R.drawable.ic_baseline_arrow_drop_down_24
-            ), contentDescription = null, modifier = Modifier.alpha(if(isVisible) 1f else 0f)
-            )
+                analyticViewModel.getGrowIconId()
+            ), contentDescription = null)
         }
     }
-}
-
-private fun getDifferentPrice(data: List<Entry>): Double {
-    if(data.isEmpty()) return 0.0
-    val firstData = data.first().y.toDouble()
-    val lastData = data.last().y.toDouble()
-
-    return lastData - firstData
-}
-
-private fun getDifferentPercent(data: List<Entry>): Double {
-    if(data.isEmpty()) return 0.0
-    val firstData = data.first().y.toDouble()
-    val lastData = data.last().y.toDouble()
-
-    return (lastData - firstData) / lastData * 100
 }
 
 @Composable
@@ -197,12 +171,12 @@ fun Chart(
                 axisLeft.setDrawAxisLine(false)
                 axisRight.isEnabled = false
                 legend.isEnabled = false
-                setTouchEnabled(true)
-                setScaleEnabled(true)
+                axisLeft.valueFormatter = AmountFormatter()
+                setTouchEnabled(false)
+                setScaleEnabled(false)
                 setDrawGridBackground(false)
                 setDrawBorders(false)
                 invalidate()
-
                 setLineDataSet(lineDataSet = lineDataSet)
             }
         },
@@ -213,5 +187,11 @@ fun Chart(
             .fillMaxWidth()
             .requiredHeight(300.dp)
     )
+}
+
+class AmountFormatter: ValueFormatter() {
+    override fun getAxisLabel(value: Float, axis: AxisBase?): String {
+        return "$ ${value.toDouble().formatNumbersAfterDot()}"
+    }
 }
 

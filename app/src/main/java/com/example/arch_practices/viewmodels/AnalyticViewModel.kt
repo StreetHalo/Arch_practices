@@ -1,9 +1,13 @@
 package com.example.arch_practices.model
 
+import android.graphics.drawable.Drawable
+import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.arch_practices.App
 import com.example.arch_practices.R
+import com.example.arch_practices.extensions.formatNumbersAfterDot
 import com.example.arch_practices.utils.Api
 import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineDataSet
@@ -44,6 +48,7 @@ class AnalyticViewModel() : ViewModel() {
 
     private var coin = MutableLiveData<Coin?>()
     private val dataState = MutableLiveData<DataState>()
+    private var dataSet = LineDataSet(listOf(), "label")
     private var periodType = PeriodType.h1
 
     fun setIntervalType(periodType: PeriodType){
@@ -59,7 +64,7 @@ class AnalyticViewModel() : ViewModel() {
         fetchHistories()
     }
 
-    fun getCurrentCoin() = coin
+    fun getCurrentCoin() = coin.value
 
     private fun fetchHistories() {
         val currentTime = Instant.now().toEpochMilli()
@@ -79,20 +84,64 @@ class AnalyticViewModel() : ViewModel() {
                        it.priceUsd.toFloat()
                    )
                 }
-                val dataSet = LineDataSet(data, "label").apply {
+                dataSet = LineDataSet(data, "label").apply {
                     mode = LineDataSet.Mode.CUBIC_BEZIER
-                    color = getColor(R.color.teal_200)
-                    highLightColor = getColor(R.color.teal_200)
-                   // fillDrawable = getBackground(context)
-                    lineWidth = 2f
+                    fillDrawable = getGraphBackground(data)
+                    highLightColor = getGraphColor(data)
+                    color = getGraphColor(data)
+                    lineWidth = 1f
                     setDrawFilled(true)
                     setDrawCircles(false)
-
                 }
                 dataState.value = DataState.Finished(dataSet, periodType)
             }
         }
     }
+
+    fun getFormattedDifferentPrice(): String{
+       return when(dataState.value){
+            is DataState.Error -> ""
+            else -> "$ " + if(isPriceGrow(dataSet.values)) "+" else {""} + getDifferentPrice(dataSet.values).formatNumbersAfterDot()
+        }
+    }
+
+    fun getFormattedDifferentPercent(): String{
+        return when(dataState.value){
+            is DataState.Error -> ""
+            else -> getDifferentPercent(dataSet.values).formatNumbersAfterDot() + "%"
+        }
+    }
+
+    fun getCurrentCoinPrice() = "$ ${dataSet.values.lastOrNull()?.y?.toDouble().formatNumbersAfterDot()}"
+
+
+    private fun getDifferentPrice(data: List<Entry>): Double {
+        if(data.isEmpty()) return 0.0
+        val firstData = data.first().y.toDouble()
+        val lastData = data.last().y.toDouble()
+
+        return lastData - firstData
+    }
+
+    private fun getDifferentPercent(data: List<Entry>): Double {
+        if(data.isEmpty()) return 0.0
+        val firstData = data.first().y.toDouble()
+        val lastData = data.last().y.toDouble()
+
+        return (lastData - firstData) / lastData * 100
+    }
+
+    private fun getGraphColor(data: List<Entry>) = App.instance.getColor(
+        if(isPriceGrow(data)) R.color.positive_change_percent
+        else R.color.negative_change_percent
+        )
+
+    private fun getGraphBackground(data: List<Entry>) = App.instance.getDrawable(
+        if(isPriceGrow(data)) R.drawable.graph_background_positive
+        else R.drawable.graph_background_negative
+        )
+
+    private fun isPriceGrow(data: List<Entry>) = getDifferentPrice(data) > 0
 
     private fun getIntervalType(periodType: PeriodType) = when(periodType){
         PeriodType.h1 -> IntervalType.m1
@@ -103,5 +152,13 @@ class AnalyticViewModel() : ViewModel() {
         PeriodType.M1 -> IntervalType.h12
         PeriodType.M6 -> IntervalType.d1
         PeriodType.M12 -> IntervalType.d1
+    }
+
+    fun getGrowIconId() = when(dataState.value){
+        is DataState.Error -> R.drawable.ic_baseline_remove_24
+        else -> {
+            if(isPriceGrow(dataSet.values)) R.drawable.ic_baseline_arrow_drop_up_24
+            else R.drawable.ic_baseline_arrow_drop_down_24
+        }
     }
 }

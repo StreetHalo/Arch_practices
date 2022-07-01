@@ -12,5 +12,5 @@
     <string name="coin_added">%s добавлен в избранное</string>
     <string name="coin_removed">%s удален из избранного</string>
     <string name="analytic_page">Аналитика</string>
-
+    <string name="error_connection">Ошибка соединения</string>
 </resources>
