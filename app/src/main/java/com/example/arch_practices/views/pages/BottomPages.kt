@@ -99,13 +99,18 @@ fun FeedScreen(
                             }
                         }
                     }
+
+                    loadState.refresh is LoadState.Error -> {
+                        item { ErrorPage() }
+                    }
+
                     loadState.append is LoadState.Loading -> {
                         item { CircularProgressIndicator() }
 
                     }
 
                     loadState.append is LoadState.Error -> {
-
+                        item { ErrorPage() }
                     }
                 }
             }
