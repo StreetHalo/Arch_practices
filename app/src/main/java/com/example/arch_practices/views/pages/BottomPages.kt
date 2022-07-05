@@ -1,5 +1,6 @@
 package com.example.arch_practices.views.pages
 
+import android.content.Context
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -21,6 +22,7 @@ import com.example.arch_practices.R
 import com.example.arch_practices.model.Coin
 import com.example.arch_practices.viewmodels.CoinsViewModel
 import kotlinx.coroutines.launch
+import org.koin.androidx.compose.inject
 
 sealed class BottomNavPage(val titleId: Int, val iconId: Int, val screenRoute: String) {
     object Feed : BottomNavPage(R.string.feed_page_title, R.drawable.ic_baseline_dns_24, "feed")
@@ -40,6 +42,7 @@ fun FeedScreen(
     val coins: LazyPagingItems<Coin> = viewModel.getCoins().collectAsLazyPagingItems()
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
+    val context: Context by inject()
 
     Box(
         modifier = Modifier
@@ -77,8 +80,8 @@ fun FeedScreen(
                             else viewModel.addCoinToFav(coin)
                             coroutineScope.launch {
                                 snackbarHostState.showSnackbar(
-                                    message = if(coin.isSaved) App.instance.getString(R.string.coin_removed, coin.name)
-                                    else App.instance.getString(R.string.coin_added, coin.name)
+                                    message = if(coin.isSaved) context.getString(R.string.coin_removed, coin.name)
+                                    else context.getString(R.string.coin_added, coin.name)
                                 )
                             }
                             coins.refresh()
@@ -129,6 +132,8 @@ fun PortfolioScreen(viewModel: CoinsViewModel){
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
     val selectedCoin: MutableState<Coin?> = remember{ mutableStateOf(null)}
+    val context: Context by inject()
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -140,7 +145,7 @@ fun PortfolioScreen(viewModel: CoinsViewModel){
                 viewModel.removeCoinFromFav(coin)
                 coroutineScope.launch {
                     snackbarHostState.showSnackbar(
-                        message = App.instance.getString(R.string.coin_removed, coin.name)
+                        message = context.getString(R.string.coin_removed, coin.name)
                     )
                 }
             }

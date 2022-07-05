@@ -1,5 +1,6 @@
 package com.example.arch_practices.model
 
+import android.content.Context
 import android.graphics.drawable.Drawable
 import android.util.Log
 import androidx.lifecycle.MutableLiveData
@@ -47,7 +48,7 @@ sealed class DataState(open val periodType: PeriodType) {
     class Error(override val periodType: PeriodType) : DataState(periodType)
 }
 
-class AnalyticViewModel() : ViewModel() {
+class AnalyticViewModel(private val apiModule: Api, private val context: Context) : ViewModel() {
 
     private var coin = MutableLiveData<Coin?>()
     private val dataState = MutableLiveData<DataState>()
@@ -121,7 +122,7 @@ class AnalyticViewModel() : ViewModel() {
         "$ ${dataSet.values.lastOrNull()?.y?.toDouble().formatNumbersAfterDot()}"
 
     private suspend fun getHistoryById(id: String, currentTime: Long) = handleRequest {
-        Api.getInstance().getHistoryById(
+        apiModule.getHistoryById(
             coinId = id,
             interval = getIntervalType(periodType),
             start = currentTime - periodType.timestamp,
@@ -146,12 +147,12 @@ class AnalyticViewModel() : ViewModel() {
         return (lastData - firstData) / lastData * 100
     }
 
-    private fun getGraphColor(data: List<Entry>) = App.instance.getColor(
+    private fun getGraphColor(data: List<Entry>) = context.getColor(
         if (isPriceGrow(data)) R.color.positive_change_percent
         else R.color.negative_change_percent
     )
 
-    private fun getGraphBackground(data: List<Entry>) = App.instance.getDrawable(
+    private fun getGraphBackground(data: List<Entry>) = context.getDrawable(
         if (isPriceGrow(data)) R.drawable.graph_background_positive
         else R.drawable.graph_background_negative
     )

@@ -2,6 +2,7 @@
 
 package com.example.arch_practices.views
 
+import android.content.Context
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
@@ -28,6 +29,7 @@ import com.example.arch_practices.R
 import com.example.arch_practices.extensions.formatNumbersAfterDot
 import com.example.arch_practices.model.Coin
 import kotlinx.coroutines.launch
+import org.koin.androidx.compose.inject
 
 @Composable
 fun CryptoCard(
@@ -230,8 +232,9 @@ fun PriceCoinText(coin: Coin){
 
 @Composable
 fun AvatarCoin(coin: Coin){
+    val context: Context by inject()
     val coinName = coin.symbol.lowercase()
-    val uriPath = "android.resource://" + App.instance.packageName.toString() + "/drawable/${coinName}"
+    val uriPath = "android.resource://" + context.packageName.toString() + "/drawable/${coinName}"
 
     Box(contentAlignment = Alignment.Center){
         SubcomposeAsyncImage(

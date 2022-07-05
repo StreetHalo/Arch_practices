@@ -4,7 +4,7 @@
     package="com.example.arch_practices">
     <uses-permission android:name="android.permission.INTERNET"/>
     <application
-        android:name=".App"
+        android:name=".AppArch"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"

@@ -10,6 +10,7 @@ import androidx.paging.cachedIn
 import androidx.room.Room
 import com.example.arch_practices.App
 import com.example.arch_practices.model.Coin
+import com.example.arch_practices.utils.Api
 import com.example.arch_practices.utils.AppDatabase
 import com.example.arch_practices.utils.CoinDao
 import com.example.arch_practices.utils.PagingCoin
@@ -18,13 +19,10 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class CoinsViewModel() : ViewModel() {
-
-    var db: AppDatabase = Room.databaseBuilder(App.instance, AppDatabase::class.java, "database").build()
-    var userDao: CoinDao = db.coinDao()
+class CoinsViewModel(private val userDao: CoinDao, private val api: Api) : ViewModel() {
 
     private val coins: Flow<PagingData<Coin>> = Pager(PagingConfig(pageSize = 100)) {
-        PagingCoin()
+        PagingCoin(api)
     }.flow.cachedIn(viewModelScope)
 
     init {

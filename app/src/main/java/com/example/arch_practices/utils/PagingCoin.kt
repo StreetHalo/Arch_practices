@@ -7,7 +7,7 @@ import com.example.arch_practices.model.Coin
 import retrofit2.HttpException
 import java.io.IOException
 
-class PagingCoin: PagingSource<Int, Coin>() {
+class PagingCoin(val api: Api): PagingSource<Int, Coin>() {
     private val step = 100
     override fun getRefreshKey(state: PagingState<Int, Coin>): Int? {
         return null
@@ -16,7 +16,7 @@ class PagingCoin: PagingSource<Int, Coin>() {
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, Coin> {
         return try {
             val nextPage = params.key ?: 0
-            val userList = Api.getInstance().getCoins(offset = nextPage).data
+            val userList = api.getCoins(offset = nextPage).data
             LoadResult.Page(
                 data = userList,
                 prevKey = if (nextPage < 100) null else nextPage - step,

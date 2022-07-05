@@ -1,13 +1,16 @@
 package com.example.arch_practices
 
 import android.app.Application
+import com.example.arch_practices.di.dataModule
+import org.koin.android.ext.koin.androidContext
+import org.koin.core.context.startKoin
 
-class App: Application() {
+class AppArch: Application() {
     override fun onCreate() {
         super.onCreate()
-        instance = this
-    }
-    companion object{
-        lateinit var instance: App
+        startKoin {
+            androidContext(this@AppArch)
+            modules(dataModule)
+        }
     }
 }
