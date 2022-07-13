@@ -13,4 +13,6 @@
     <string name="coin_removed">%s удален из избранного</string>
     <string name="analytic_page">Аналитика</string>
     <string name="error_connection">Ошибка соединения</string>
+    <string name="empty_portfolio">Вы пока не сохранили ни одного коина</string>
+
 </resources>

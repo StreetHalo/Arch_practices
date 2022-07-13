@@ -50,7 +50,7 @@ fun BottomNavigationGraph(navController: NavHostController,
             exitTransition = { ExitTransition.None },
             popExitTransition = { ExitTransition.None }
         ) {
-            PortfolioScreen(coinsViewModel)
+            PortfolioScreen(coinsViewModel, onCardCoin)
         }
     }
 }

@@ -1,6 +1,7 @@
 package com.example.arch_practices.views.pages
 
 import android.content.Context
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -9,6 +10,8 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.paging.LoadState
@@ -126,8 +129,11 @@ fun FeedScreen(
 }
 
 @Composable
-fun PortfolioScreen(viewModel: CoinsViewModel){
-    val coins by viewModel.getFavCoins().observeAsState(initial = emptyList())
+fun PortfolioScreen(
+    viewModel: CoinsViewModel,
+    onCardCoin: (Coin) -> Unit,
+    ){
+    val coins by viewModel.getFavCoins().observeAsState()
     val isShowDialog = remember { mutableStateOf(false)  }
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
@@ -155,8 +161,9 @@ fun PortfolioScreen(viewModel: CoinsViewModel){
                 .fillMaxSize()
                 .wrapContentSize(Alignment.TopCenter)
         ) {
-            LazyColumn {
-                items(items = coins){ coin: Coin? ->
+            if(coins.isNullOrEmpty()) EmptyPortfolio()
+            else LazyColumn {
+                items(items = coins ?: listOf()){ coin: Coin? ->
                     Row(modifier = Modifier
                         .fillMaxSize()
                         .padding(
@@ -174,7 +181,7 @@ fun PortfolioScreen(viewModel: CoinsViewModel){
                             symbol = coin?.symbol ?: ""
                         ),
                             onCardClick =  { coin ->
-
+                                onCardCoin(coin)
                             },
                             onSwipeToRemove = { coin ->
                                 selectedCoin.value = coin
@@ -188,6 +195,26 @@ fun PortfolioScreen(viewModel: CoinsViewModel){
             hostState = snackbarHostState,
             modifier = Modifier.align(Alignment.BottomCenter),
         )
+    }
+}
+
+@Composable
+fun EmptyPortfolio(){
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center,
+    ){
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Image(
+                painter = painterResource(id = R.drawable.ic_baseline_work_24),
+                modifier = Modifier
+                    .size(52.dp)
+                    .alpha(0.7f),
+                contentDescription = null)
+            Spacer(modifier = Modifier.height(height = 8.dp))
+            Text(text = stringResource(id = R.string.empty_portfolio))
+        }
+
     }
 }
 
